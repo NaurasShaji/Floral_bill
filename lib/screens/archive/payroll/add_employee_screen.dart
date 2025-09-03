@@ -350,16 +350,32 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
                                       ],
                                     ),
                                   ),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.shade50,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: IconButton(
-                                      icon: Icon(Icons.edit_outlined, color: Colors.blue.shade600, size: 20),
-                                      onPressed: () => _editEmployee(e),
-                                      tooltip: 'Edit Employee',
-                                    ),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.shade50,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: IconButton(
+                                          icon: Icon(Icons.edit_outlined, color: Colors.blue.shade600, size: 20),
+                                          onPressed: () => _editEmployee(e),
+                                          tooltip: 'Edit Employee',
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.red.shade50,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: IconButton(
+                                          icon: Icon(Icons.delete_outline, color: Colors.red.shade600, size: 20),
+                                          onPressed: () => _deleteEmployee(e),
+                                          tooltip: 'Delete Employee',
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -417,6 +433,106 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
+    }
+  }
+
+  Future<void> _deleteEmployee(Employee employee) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Icon(Icons.warning_amber_outlined, color: Colors.red.shade600),
+              const SizedBox(width: 8),
+              const Text('Delete Employee'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Are you sure you want to delete this employee?'),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.person_outline, color: Colors.red.shade600, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            employee.name,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red.shade700,
+                            ),
+                          ),
+                          Text(
+                            '${employee.type == 'daily' ? 'Daily Wage' : 'Monthly Salary'} - ₹${employee.wage.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.red.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'This action cannot be undone.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.red.shade600,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red.shade600,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      final box = Hive.box<Employee>(Boxes.employees);
+      await box.delete(employee.id);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Employee "${employee.name}" deleted successfully!'),
+            backgroundColor: Colors.red.shade600,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
     }
   }
 
