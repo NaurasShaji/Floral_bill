@@ -10,8 +10,7 @@ class ProductSelectionScreen extends StatefulWidget {
   State<ProductSelectionScreen> createState() => _ProductSelectionScreenState();
 }
 
-class _ProductSelectionScreenState extends State<ProductSelectionScreen> 
-    with TickerProviderStateMixin {
+class _ProductSelectionScreenState extends State<ProductSelectionScreen> with TickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String? _selectedCategory;
@@ -34,13 +33,13 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen>
       parent: _slideController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text;
       });
     });
-    
+
     _slideController.forward();
   }
 
@@ -66,8 +65,9 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen>
     final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
-    
+
     return Scaffold(
+      resizeToAvoidBottomInset: true, // Ensures resizing when keyboard appears
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text(
@@ -85,14 +85,14 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen>
           ),
         ],
       ),
-      body: SlideTransition(
-        position: _slideAnimation,
+      body: SafeArea(
         child: Column(
           children: [
-            // Enhanced Filter Section
-            Container(
+            // Filters and search area
+            Material(
               color: theme.primaryColor,
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   _buildSearchSection(theme, isTablet),
                   _buildFilterSection(theme, isTablet),
@@ -109,10 +109,13 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen>
                 ],
               ),
             ),
-            
-            // Products List
+
+            // Expanded products list which scrolls and resizes properly with keyboard
             Expanded(
-              child: _buildProductsList(theme, isTablet),
+              child: GestureDetector(
+                onTap: () => FocusScope.of(context).unfocus(), // Dismiss keyboard on tap outside
+                child: _buildProductsList(theme, isTablet),
+              ),
             ),
           ],
         ),
@@ -297,13 +300,13 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen>
               Text(
                 'Select Category',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               const SizedBox(height: 16),
               ...['All Categories', ...categories].map((category) {
-                final isSelected = category == 'All Categories' 
-                    ? _selectedCategory == null 
+                final isSelected = category == 'All Categories'
+                    ? _selectedCategory == null
                     : _selectedCategory == category;
                 return ListTile(
                   title: Text(category),
@@ -350,8 +353,8 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen>
               Text(
                 'Select Unit Type',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               const SizedBox(height: 16),
               ...[null, ...UnitType.values].map((unitType) {
@@ -419,10 +422,10 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen>
                 ],
               ),
             ),
-            
+
             // Products grid/list
             Expanded(
-              child: isTablet 
+              child: isTablet
                   ? _buildProductsGrid(filteredProducts, theme)
                   : _buildProductsListView(filteredProducts, theme),
             ),
@@ -483,7 +486,7 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen>
             color: isOutOfStock ? Colors.grey.shade100 : Colors.white,
           ),
           child: isGrid ? _buildGridContent(product, theme, isOutOfStock, isLowStock)
-                        : _buildListContent(product, theme, isOutOfStock, isLowStock),
+              : _buildListContent(product, theme, isOutOfStock, isLowStock),
         ),
       ),
     );
@@ -668,7 +671,7 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen>
         ),
       );
     }
-    
+
     if (isLowStock) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -686,7 +689,7 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen>
         ),
       );
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -753,9 +756,9 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen>
   }
 
   bool _hasActiveFilters() {
-    return _searchQuery.isNotEmpty || 
-           _selectedCategory != null || 
-           _selectedUnitType != null || 
-           _showOnlyInStock;
+    return _searchQuery.isNotEmpty ||
+        _selectedCategory != null ||
+        _selectedUnitType != null ||
+        _showOnlyInStock;
   }
 }

@@ -16,7 +16,7 @@ class ThermalPreviewDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
     final isSmallScreen = screenSize.width < 600;
-    
+
     return Dialog(
       insetPadding: EdgeInsets.all(isSmallScreen ? 8 : 16),
       child: Container(
@@ -46,7 +46,7 @@ class ThermalPreviewDialog extends StatelessWidget {
               ],
             ),
             const Divider(),
-            
+
             // Preview Content
             Expanded(
               child: Container(
@@ -67,49 +67,49 @@ class ThermalPreviewDialog extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             SizedBox(height: isSmallScreen ? 12 : 16),
-            
+
             // Action Buttons
             isSmallScreen
-              ? Column(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        icon: const Icon(Icons.print),
-                        label: const Text('Print Now'),
+                ? Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          icon: const Icon(Icons.print),
+                          label: const Text('Print Now'),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: const Text('Cancel'),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel'),
+                        ),
                       ),
-                    ),
-                  ],
-                )
-              : Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: const Text('Cancel'),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel'),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        icon: const Icon(Icons.print),
-                        label: const Text('Print Now'),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          icon: const Icon(Icons.print),
+                          label: const Text('Print Now'),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
           ],
         ),
       ),
@@ -120,57 +120,35 @@ class ThermalPreviewDialog extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Logo and Header
+        // Bigger, bold "Royal Garden" heading replacing logo image
         Column(
           children: [
-            // Logo image
-            Container(
-              width: isSmallScreen ? 60 : 80,
-              height: isSmallScreen ? 60 : 80,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: Image.asset(
-                  'assets/icon/floralbill_icon.jpg',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    // Fallback to text if image fails to load
-                    return Container(
-                      color: Colors.grey.shade100,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Royal',
-                            style: TextStyle(
-                              fontSize: isSmallScreen ? 12 : 14,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.5,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          Text(
-                            'Garden',
-                            style: TextStyle(
-                              fontSize: isSmallScreen ? 10 : 12,
-                              letterSpacing: 1.0,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+            Text(
+              'Royal',
+              style: TextStyle(
+                fontSize: isSmallScreen ? 22 : 28,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2.0,
               ),
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              'Garden',
+              style: TextStyle(
+                fontSize: isSmallScreen ? 18 : 22,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
-        
+
         SizedBox(height: isSmallScreen ? 4 : 6),
-        
+
         // Business contact info
         Text(
-          ' +91 95622 91843 , +91 94469 32750',
+          '+91 9562291843,+91 9446932750',
           style: TextStyle(
             fontSize: isSmallScreen ? 8 : 9,
             color: Colors.black87,
@@ -186,31 +164,21 @@ class ThermalPreviewDialog extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         Text(
-          'Thodupuzha',
+          'Thodupuzha, 685585',
           style: TextStyle(
             fontSize: isSmallScreen ? 8 : 9,
             color: Colors.black87,
           ),
           textAlign: TextAlign.center,
         ),
-        Text(
-          '685585',
-          style: TextStyle(
-            fontSize: isSmallScreen ? 8 : 9,
-            color: Colors.black87,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        
+
         SizedBox(height: isSmallScreen ? 6 : 8),
-        
+
         // Invoice title
         Container(
           width: double.infinity,
           padding: EdgeInsets.symmetric(
-            vertical: isSmallScreen ? 3 : 4, 
-            horizontal: isSmallScreen ? 6 : 8
-          ),
+              vertical: isSmallScreen ? 3 : 4, horizontal: isSmallScreen ? 6 : 8),
           decoration: BoxDecoration(
             color: Colors.grey.shade200,
             borderRadius: BorderRadius.circular(4),
@@ -224,27 +192,24 @@ class ThermalPreviewDialog extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ),
-        
+
         const SizedBox(height: 8),
-        
+
         // Invoice details
         _buildPreviewRow('ID:', sale.id),
         _buildPreviewRow('Date:', DateFormat('dd/MM/yy HH:mm').format(sale.date)),
         if (sale.customerName.isNotEmpty)
           _buildPreviewRow('Customer:', _truncateText(sale.customerName, 15)),
-        if (sale.customerPhone.isNotEmpty)
-          _buildPreviewRow('Phone:', sale.customerPhone),
+        if (sale.customerPhone.isNotEmpty) _buildPreviewRow('Phone:', sale.customerPhone),
         _buildPreviewRow('Payment:', sale.payment.name.toUpperCase()),
-        
+
         SizedBox(height: isSmallScreen ? 6 : 8),
-        
+
         // Items header
         Container(
           width: double.infinity,
           padding: EdgeInsets.symmetric(
-            vertical: isSmallScreen ? 2 : 3, 
-            horizontal: isSmallScreen ? 3 : 4
-          ),
+              vertical: isSmallScreen ? 2 : 3, horizontal: isSmallScreen ? 3 : 4),
           decoration: BoxDecoration(
             color: Colors.grey.shade800,
             borderRadius: BorderRadius.circular(2),
@@ -301,7 +266,7 @@ class ThermalPreviewDialog extends StatelessWidget {
             ],
           ),
         ),
-        
+
         // Items list
         Container(
           decoration: BoxDecoration(
@@ -315,9 +280,9 @@ class ThermalPreviewDialog extends StatelessWidget {
             }).toList(),
           ),
         ),
-        
+
         const SizedBox(height: 8),
-        
+
         // Totals
         Container(
           width: double.infinity,
@@ -362,9 +327,9 @@ class ThermalPreviewDialog extends StatelessWidget {
             ],
           ),
         ),
-        
+
         const SizedBox(height: 8),
-        
+
         // Footer
         Container(
           width: double.infinity,
@@ -382,9 +347,9 @@ class ThermalPreviewDialog extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ),
-        
+
         const SizedBox(height: 4),
-        
+
         Text(
           'Printed: ${DateFormat('dd/MM/yy HH:mm').format(DateTime.now())}',
           style: TextStyle(
@@ -402,7 +367,7 @@ class ThermalPreviewDialog extends StatelessWidget {
       builder: (context) {
         final screenSize = MediaQuery.of(context).size;
         final isSmallScreen = screenSize.width < 600;
-        
+
         return Container(
           padding: const EdgeInsets.symmetric(vertical: 1),
           child: Row(
@@ -440,11 +405,11 @@ class ThermalPreviewDialog extends StatelessWidget {
     final productName = product?.name ?? 'Unknown Product';
     final qty = item.qty.toStringAsFixed(product?.unit == UnitType.kg ? 1 : 0);
     final unitLabel = item.unitLabel.isNotEmpty ? item.unitLabel : (product?.unit.name ?? '');
-    
+
     // Force 15 character limit per line
     String firstLine = '';
     String secondLine = '';
-    
+
     if (productName.length <= 15) {
       firstLine = productName;
     } else {
@@ -464,8 +429,8 @@ class ThermalPreviewDialog extends StatelessWidget {
         ),
       ),
       padding: EdgeInsets.symmetric(
-        vertical: isSmallScreen ? 3 : 4, 
-        horizontal: isSmallScreen ? 3 : 4
+        vertical: isSmallScreen ? 3 : 4,
+        horizontal: isSmallScreen ? 3 : 4,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -495,7 +460,7 @@ class ThermalPreviewDialog extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              ] else 
+              ] else
                 Expanded(flex: 3, child: SizedBox()),
               Expanded(
                 flex: 1,

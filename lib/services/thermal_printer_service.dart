@@ -95,48 +95,33 @@ class ThermalPrinterService {
   }
 
   Future<List<int>> _generateTicketWithLogo(Sale sale) async {
-    List<int> bytes = [];
-    
-    // Using default profile for 58mm paper
-    final profile = await CapabilityProfile.load();
-    final generator = Generator(PaperSize.mm58, profile);
-    
-    bytes += generator.reset();
-    
-    try {
-      // Load and print logo image
-      final ByteData data = await rootBundle.load('assets/icon/floralbill_icon.jpg');
-      final Uint8List bytesImg = data.buffer.asUint8List();
-      final image = img.decodeImage(bytesImg);
-      
-      if (image != null) {
-        // Resize image to fit 58mm width (approximately 384 pixels)
-        final resizedImage = img.copyResize(image, width: 200);
-        bytes += generator.image(resizedImage);
-      } else {
-        // Fallback to text header if image decoding fails
-        bytes += generator.text('Royal Garden', 
-            styles: PosStyles(align: PosAlign.center));
-      }
-    } catch (e) {
-      print('Error loading logo: $e');
-      // Fallback to text header if image fails
-      bytes += generator.text('Royal Garden', 
-          styles: PosStyles(align: PosAlign.center));
-    }
-    
-    // Business contact info - centered
-    bytes += generator.text(' +91 95622 91843 , +91 94469 32750', 
+  List<int> bytes = [];
+
+  // Using default profile for 58mm paper
+  final profile = await CapabilityProfile.load();
+  final generator = Generator(PaperSize.mm58, profile);
+
+  bytes += generator.reset();
+
+  // Replace logo with bold, bigger "Royal Garden" heading
+  bytes += generator.text(
+    'Royal Garden',
+    styles: PosStyles(align: PosAlign.center, bold: true, height: PosTextSize.size2, width: PosTextSize.size2),
+    linesAfter: 1,
+  );
+
+  // Business contact info - centered
+    bytes += generator.text('FourLane Byepass,Mangattukavala',
         styles: PosStyles(align: PosAlign.center));
-    bytes += generator.text('Four Lane Byepass, Mangattukavala ', 
+    bytes += generator.text('Thodupuzha, 685585',
         styles: PosStyles(align: PosAlign.center));
-    bytes += generator.text('Thodupuzha', 
+    bytes += generator.text('9562291843, 9446932750',
         styles: PosStyles(align: PosAlign.center));
-    bytes += generator.text('685585', 
-        styles: PosStyles(align: PosAlign.center));
-    bytes += generator.text('         INVOICE', 
+    bytes += generator.text('INVOICE',
         styles: PosStyles(align: PosAlign.center, bold: true));
     bytes += generator.text('');
+
+
 
     // Invoice details
     bytes += generator.text('ID: ${sale.id}');
@@ -202,9 +187,9 @@ class ThermalPrinterService {
     bytes += generator.text('');
 
     // Footer
-    bytes += generator.text('        THANK YOU!', 
+    bytes += generator.text('THANK YOU!', 
         styles: PosStyles(align: PosAlign.center));
-    bytes += generator.text('   Printed: ${DateFormat('dd/MM/yy HH:mm').format(DateTime.now())}', 
+    bytes += generator.text('Visit again for fresh flowers and plants', 
         styles: PosStyles(align: PosAlign.center));
     bytes += generator.text('');
     // bytes += generator.text('      Royal Garden', 
