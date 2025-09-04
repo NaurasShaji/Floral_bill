@@ -309,7 +309,7 @@ class _CartItemWidget extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Stock: ${availableStock.toStringAsFixed(product.unit == UnitType.kg ? 1 : 0)} ${product.unit.name}',
+                      'Stock: ${availableStock == availableStock.toInt() ? availableStock.toInt().toString() : availableStock.toString()} ${product.unit.name}',
                       style: TextStyle(
                         color: availableStock <= 0 ? _errorColor : Colors.grey.shade600,
                         fontSize: 14,
@@ -381,7 +381,7 @@ class _CartItemWidget extends StatelessWidget {
               const SizedBox(width: 8),
               // Quantity Controls
               SizedBox(
-                width: 125,
+                width: 150,
                 child: _QuantityControls(
                   quantity: item.qty,
                   unit: product.unit,
@@ -458,7 +458,11 @@ class _QuantityControlsState extends State<_QuantityControls> {
   @override
   void didUpdateWidget(covariant _QuantityControls oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.quantity != oldWidget.quantity) {
+    // Only update if the controller is empty or the quantity changed significantly
+    // This prevents overriding user input while typing
+    if (widget.quantity != oldWidget.quantity && 
+        (_quantityController.text.isEmpty || 
+         double.tryParse(_quantityController.text) != widget.quantity)) {
       _quantityController.text = _formatQuantity(widget.quantity);
     }
   }
@@ -470,12 +474,17 @@ class _QuantityControlsState extends State<_QuantityControls> {
   }
 
   String _formatQuantity(double qty) {
-    return widget.unit == UnitType.kg ? qty.toStringAsFixed(1) : qty.toInt().toString();
+    // Let user control the format - don't force decimal places
+    if (qty == qty.toInt()) {
+      return qty.toInt().toString();
+    } else {
+      return qty.toString();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final increment = widget.unit == UnitType.kg ? 0.5 : 1.0;
+    final increment = (widget.unit == UnitType.kg || widget.unit == UnitType.sqft) ? 0.5 : 1.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -515,13 +524,17 @@ class _QuantityControlsState extends State<_QuantityControls> {
                     contentPadding: EdgeInsets.zero,
                   ),
                   onChanged: (value) {
-                    final parsed = double.tryParse(value.replaceAll(',', '.'));
-                    if (parsed == null) return; 
-                    if (parsed < 0) {
+                    // Don't update while user is actively typing
+                    if (value.isEmpty) {
                       widget.onQuantityChanged(0);
-                    } else {
+                      return;
+                    }
+                    
+                    final parsed = double.tryParse(value.replaceAll(',', '.'));
+                    if (parsed != null && parsed >= 0) {
                       widget.onQuantityChanged(parsed);
                     }
+                    // If parsing fails, don't update - let user continue typing
                   },
                 ),
               ),
