@@ -74,6 +74,8 @@ class UnitTypeAdapter extends TypeAdapter<UnitType> {
         return UnitType.pcs;
       case 1:
         return UnitType.kg;
+      case 2:
+        return UnitType.sqft;
       default:
         return UnitType.pcs;
     }
@@ -87,6 +89,9 @@ class UnitTypeAdapter extends TypeAdapter<UnitType> {
         break;
       case UnitType.kg:
         writer.writeByte(1);
+        break;
+      case UnitType.sqft:
+        writer.writeByte(2);
         break;
     }
   }

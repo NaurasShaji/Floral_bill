@@ -347,35 +347,37 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
                                             ),
                                           ],
                                         ),
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.blue.shade50,
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: IconButton(
+                                                icon: Icon(Icons.edit_outlined, color: Colors.blue.shade600, size: 20),
+                                                onPressed: () => _editEmployee(e),
+                                                tooltip: 'Edit Employee',
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.red.shade50,
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: IconButton(
+                                                icon: Icon(Icons.delete_outline, color: Colors.red.shade600, size: 20),
+                                                onPressed: () => _deleteEmployee(e),
+                                                tooltip: 'Delete Employee',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ],
                                     ),
-                                  ),
-                                  Row(
-                                    children: [
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.blue.shade50,
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: IconButton(
-                                          icon: Icon(Icons.edit_outlined, color: Colors.blue.shade600, size: 20),
-                                          onPressed: () => _editEmployee(e),
-                                          tooltip: 'Edit Employee',
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.red.shade50,
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: IconButton(
-                                          icon: Icon(Icons.delete_outline, color: Colors.red.shade600, size: 20),
-                                          onPressed: () => _deleteEmployee(e),
-                                          tooltip: 'Delete Employee',
-                                        ),
-                                      ),
-                                    ],
                                   ),
                                 ],
                               ),

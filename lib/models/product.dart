@@ -5,6 +5,7 @@ part 'product.g.dart';
 enum UnitType {
   @HiveField(0) pcs,
   @HiveField(1) kg,
+  @HiveField(2) sqft,
 }
 
 @HiveType(typeId: 4)

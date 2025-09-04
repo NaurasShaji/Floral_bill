@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../models/models.dart';
 import '../../services/boxes.dart';
 import '../../services/auth_service.dart';
+import '../../services/cart_service.dart';
 import '../../services/pdf_service.dart'; // Import the new PDF service
 import '../../services/invoice_service.dart'; // Import for generateInvoice function
 import '../edit_invoice_screen.dart'; // Added import for EditInvoiceScreen
@@ -28,26 +29,26 @@ class BillingTab extends StatefulWidget {
 }
 
 class _BillingTabState extends State<BillingTab> with TickerProviderStateMixin {
-  final List<SaleItem> items = [];
+  late CartService _cartService;
   final TextEditingController _customerName = TextEditingController();
   final TextEditingController _customerPhone = TextEditingController();
-  PaymentMethod _method = PaymentMethod.cash;
+  final TextEditingController _discountController = TextEditingController();
   AnimationController? _animationController;
   Animation<double>? _fadeAnimation;
-  final TextEditingController _discountController = TextEditingController();
-  double _discount = 0.0;
-    // Option to print PDF
-    // bool _printPdf = true;
 
-  // Add these getters
-  double get total => items.fold(0.0, (a,it)=>a+it.subtotal) - _discount;
-  double get cost => items.fold(0.0, (a,it)=>a+(it.costPrice * it.qty));
-  double get profit => total - cost;
-  int get itemCount => items.fold(0, (a, it) => a + it.qty.ceil());
+  // Add these getters that delegate to CartService
+  List<SaleItem> get items => _cartService.items;
+  PaymentMethod get _method => _cartService.paymentMethod;
+  double get _discount => _cartService.discount;
+  double get total => _cartService.total;
+  double get cost => _cartService.cost;
+  double get profit => _cartService.profit;
+  int get itemCount => _cartService.itemCount;
 
   @override
   void initState() {
     super.initState();
+    _cartService = CartService();
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -56,10 +57,19 @@ class _BillingTabState extends State<BillingTab> with TickerProviderStateMixin {
       CurvedAnimation(parent: _animationController!, curve: Curves.easeInOut),
     );
     _animationController?.forward();
+    
+    // Initialize controllers with cart service data
+    _customerName.text = _cartService.customerName;
+    _customerPhone.text = _cartService.customerPhone;
+    _discountController.text = _cartService.discount.toString();
+    
+    // Listen to cart changes
+    _cartService.addListener(_onCartChanged);
   }
 
   @override
   void dispose() {
+    _cartService.removeListener(_onCartChanged);
     _animationController?.dispose();
     _customerName.dispose();
     _customerPhone.dispose();
@@ -67,20 +77,25 @@ class _BillingTabState extends State<BillingTab> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  void _onCartChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   // Get current cart quantity for a product
   double _getCartQuantity(String productId) {
-    final cartItem = items.where((item) => item.productId == productId);
-    return cartItem.isEmpty ? 0 : cartItem.first.qty;
+    return _cartService.getCartQuantity(productId);
   }
 
   // Get available stock for a product (stock - cart quantity)
   double _getAvailableStock(Product product) {
-    return product.stock - _getCartQuantity(product.id);
+    return _cartService.getAvailableStock(product);
   }
 
   // Check if we can add more quantity to cart
   bool _canAddToCart(Product product, double quantityToAdd) {
-    return _getAvailableStock(product) >= quantityToAdd;
+    return _cartService.canAddToCart(product, quantityToAdd);
   }
 
   InputDecoration _getInputDecoration({
@@ -149,7 +164,10 @@ class _BillingTabState extends State<BillingTab> with TickerProviderStateMixin {
   Widget _buildPaymentMethodTile(PaymentMethod method, String label, IconData icon) {
     final isSelected = _method == method;
     return InkWell(
-      onTap: () => setState(() => _method = method),
+      onTap: () {
+        _cartService.updatePaymentMethod(method);
+        setState(() {});
+      },
       borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -530,6 +548,9 @@ class _BillingTabState extends State<BillingTab> with TickerProviderStateMixin {
                               icon: Icons.person_outline,
                               hint: 'Optional',
                             ),
+                            onChanged: (value) {
+                              _cartService.updateCustomerInfo(value, _customerPhone.text);
+                            },
                           ),
                           const SizedBox(height: 16),
                           TextField(
@@ -540,6 +561,9 @@ class _BillingTabState extends State<BillingTab> with TickerProviderStateMixin {
                               icon: Icons.phone_outlined,
                               hint: 'Optional',
                             ),
+                            onChanged: (value) {
+                              _cartService.updateCustomerInfo(_customerName.text, value);
+                            },
                           ),
                           const SizedBox(height: 20),
                           _buildSectionHeader('Payment Method', Icons.payment_outlined),
@@ -582,46 +606,36 @@ class _BillingTabState extends State<BillingTab> with TickerProviderStateMixin {
                   ShoppingCartSection(
                     items: items,
                     products: products,
-                    onClearAll: () => setState(() => items.clear()),
+                    onClearAll: () {
+                      _cartService.clearCart();
+                      _customerName.clear();
+                      _customerPhone.clear();
+                      _discountController.clear();
+                    },
                     onAddProduct: (product) {
-                      // Logic to add product, similar to original onChanged
-                      final increment = product.unit == UnitType.kg ? 0.5 : 1.0;
-                      final existingIndex = items.indexWhere((item) => item.productId == product.id);
-
-                      if (existingIndex != -1) {
-                        if (_canAddToCart(product, increment)) {
-                          setState(() {
-                            items[existingIndex].qty += increment;
-                            items[existingIndex].subtotal = items[existingIndex].qty * items[existingIndex].sellingPrice;
-                          });
-                        } else {
-                          _showStockLimitMessage(product.name, _getAvailableStock(product));
-                        }
+                      // Logic to add product using CartService
+                      final increment = (product.unit == UnitType.kg || product.unit == UnitType.sqft) ? 0.5 : 1.0;
+                      
+                      if (_canAddToCart(product, increment)) {
+                        final item = SaleItem()
+                          ..productId = product.id
+                          ..qty = increment
+                          ..sellingPrice = product.sellingPrice
+                          ..costPrice = product.costPrice
+                          ..subtotal = product.sellingPrice * increment
+                          ..unitLabel = product.unit.name;
+                        _cartService.addItem(item);
                       } else {
-                        if (_canAddToCart(product, increment)) {
-                          final it = SaleItem()
-                            ..productId = product.id
-                            ..qty = increment
-                            ..sellingPrice = product.sellingPrice
-                            ..costPrice = product.costPrice
-                            ..subtotal = product.sellingPrice * increment
-                            ..unitLabel = product.unit.name;
-                          setState(() => items.add(it));
-                        } else {
-                          _showStockLimitMessage(product.name, _getAvailableStock(product));
-                        }
+                        _showStockLimitMessage(product.name, _getAvailableStock(product));
                       }
                     },
                     onUpdateCartItem: (item, product, index) {
-                      setState(() {
-                        // Logic to update item, available stock check might be needed here too
-                        item.subtotal = item.qty * item.sellingPrice;
-                      });
+                      // Update item through CartService
+                      item.subtotal = item.qty * item.sellingPrice;
+                      _cartService.updateItem(index, item);
                     },
                     onRemoveCartItem: (item, product, index) {
-                      setState(() {
-                        items.removeAt(index);
-                      });
+                      _cartService.removeItem(index);
                     },
                   ),
 
@@ -652,11 +666,9 @@ class _BillingTabState extends State<BillingTab> with TickerProviderStateMixin {
                                 hint: 'Enter discount amount (optional)',
                               ),
                               onChanged: (value) {
-                                setState(() {
-                                  _discount = double.tryParse(value) ?? 0.0;
-                                  if (_discount < 0) _discount = 0.0;
-                                  if (_discount > total) _discount = total;
-                                });
+                                final discount = double.tryParse(value) ?? 0.0;
+                                final clampedDiscount = discount.clamp(0.0, total);
+                                _cartService.updateDiscount(clampedDiscount);
                               },
                             ),
                             const SizedBox(height: 16),
@@ -960,14 +972,10 @@ class _BillingTabState extends State<BillingTab> with TickerProviderStateMixin {
           await _handlePrintInvoice(sale, printOption);
         }
         
-        setState(() {
-          items.clear();
-          _customerName.clear();
-          _customerPhone.clear();
-          _method = PaymentMethod.cash;
-          _discountController.clear(); // Clear discount controller
-          _discount = 0.0; // Reset discount
-        });
+        _cartService.clearCart();
+        _customerName.clear();
+        _customerPhone.clear();
+        _discountController.clear();
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
