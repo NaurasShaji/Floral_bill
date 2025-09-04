@@ -148,22 +148,24 @@ class ThermalPrinterService {
       final qty = item.qty.toStringAsFixed(product?.unit == UnitType.kg ? 1 : 0);
       final unitLabel = item.unitLabel.isNotEmpty ? item.unitLabel : (product?.unit.name ?? '');
 
-      // Format product name to fit 58mm width (32 chars)
-      String formattedName = productName.length > 18 ? '${productName.substring(0, 18)}...' : productName;
-      bytes += generator.text(formattedName);
-      
-      // Format quantity, rate and amount in one line
       String qtyStr = '$qty ${unitLabel.isNotEmpty ? unitLabel : ''}'.trim();
-      String rateStr = 'Rs.${item.sellingPrice.toStringAsFixed(2)}';
       String amtStr = 'Rs.${item.subtotal.toStringAsFixed(2)}';
       
-      // Create properly spaced line for 32 char width
-      String itemLine = qtyStr.padRight(8) + rateStr.padLeft(10) + amtStr.padLeft(14);
-      if (itemLine.length > 32) {
-        itemLine = qtyStr.padRight(6) + rateStr.padLeft(8) + amtStr.padLeft(12);
+      // Handle long product names with wrapping after 15 characters
+      if (productName.length <= 15) {
+        // Short name - fits on one line with qty and amount
+        String itemLine = productName.padRight(19) + qtyStr.padRight(8) + amtStr;
+        bytes += generator.text(itemLine);
+      } else {
+        // Long name - wrap product name and put qty/amount on next line
+        bytes += generator.text(productName.substring(0, 15));
+        if (productName.length > 15) {
+          bytes += generator.text(productName.substring(15));
+        }
+        // Align qty and amount to match header positions
+        String qtyAmtLine = ''.padRight(19) + qtyStr.padRight(8) + amtStr;
+        bytes += generator.text(qtyAmtLine);
       }
-      bytes += generator.text(itemLine);
-      bytes += generator.text('');
     }
 
     // Totals
@@ -188,8 +190,6 @@ class ThermalPrinterService {
 
     // Footer
     bytes += generator.text('THANK YOU!', 
-        styles: PosStyles(align: PosAlign.center));
-    bytes += generator.text('Visit again for fresh flowers and plants', 
         styles: PosStyles(align: PosAlign.center));
     bytes += generator.text('');
     // bytes += generator.text('      Royal Garden', 

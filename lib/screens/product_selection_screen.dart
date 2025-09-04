@@ -86,38 +86,40 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> with Ti
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Filters and search area
-            Material(
-              color: theme.primaryColor,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildSearchSection(theme, isTablet),
-                  _buildFilterSection(theme, isTablet),
-                  Container(
-                    height: 20,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(20),
-                        topRight: Radius.circular(20),
+        child: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(), // Dismiss keyboard on tap outside
+          child: CustomScrollView(
+            slivers: [
+              // Fixed filters and search area
+              SliverToBoxAdapter(
+                child: Material(
+                  color: theme.primaryColor,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildSearchSection(theme, isTablet),
+                      _buildFilterSection(theme, isTablet),
+                      Container(
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(20),
+                            topRight: Radius.circular(20),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-
-            // Expanded products list which scrolls and resizes properly with keyboard
-            Expanded(
-              child: GestureDetector(
-                onTap: () => FocusScope.of(context).unfocus(), // Dismiss keyboard on tap outside
+              
+              // Scrollable products list that adjusts to keyboard
+              SliverFillRemaining(
                 child: _buildProductsList(theme, isTablet),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -423,8 +425,8 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> with Ti
               ),
             ),
 
-            // Products grid/list
-            Expanded(
+            // Products grid/list - now scrollable within available space
+            Flexible(
               child: isTablet
                   ? _buildProductsGrid(filteredProducts, theme)
                   : _buildProductsListView(filteredProducts, theme),
