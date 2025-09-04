@@ -103,6 +103,9 @@ class ThermalPrinterService {
 
   bytes += generator.reset();
 
+  // Currency symbol - fallback to Rs. if printer doesn't support ₹
+  const String currencySymbol = '₹'; // Can change to 'Rs.' if needed
+
   // Replace logo with bold, bigger "Royal Garden" heading
   bytes += generator.text(
     'Royal Garden',
@@ -136,12 +139,12 @@ class ThermalPrinterService {
     bytes += generator.text('Payment: ${sale.payment.name.toUpperCase()}');
     bytes += generator.text('');
 
-    // Items header
+    // Items header - adjusted for 58mm paper (32 characters width)
     bytes += generator.text('================================');
-    bytes += generator.text('ITEM               QTY     AMT');
+    bytes += generator.text('ITEM          QTY        AMT');
     bytes += generator.text('================================');
 
-    // Print items
+    // Print items with better formatting for 58mm paper
     for (var item in sale.items) {
       final product = Hive.box<Product>(Boxes.products).get(item.productId);
       final productName = product?.name ?? 'Unknown Product';
@@ -149,42 +152,62 @@ class ThermalPrinterService {
       final unitLabel = item.unitLabel.isNotEmpty ? item.unitLabel : (product?.unit.name ?? '');
 
       String qtyStr = '$qty ${unitLabel.isNotEmpty ? unitLabel : ''}'.trim();
-      String amtStr = 'Rs.${item.subtotal.toStringAsFixed(2)}';
+      String amtStr = '$currencySymbol${item.subtotal.toStringAsFixed(2)}';
       
-      // Handle long product names with wrapping after 15 characters
-      if (productName.length <= 15) {
-        // Short name - fits on one line with qty and amount
-        String itemLine = productName.padRight(19) + qtyStr.padRight(8) + amtStr;
+      // For 58mm paper, we have about 32 characters width
+      // Product name: 13 chars, Qty: 9 chars, Amount: 10 chars
+      if (productName.length <= 13) {
+        // Short name - fits on one line
+        String itemLine = productName.padRight(14) + qtyStr.padRight(9) + amtStr;
         bytes += generator.text(itemLine);
       } else {
-        // Long name - wrap product name and put qty/amount on next line
-        bytes += generator.text(productName.substring(0, 15));
-        if (productName.length > 15) {
-          bytes += generator.text(productName.substring(15));
+        // Long name - split intelligently at word boundaries
+        List<String> words = productName.split(' ');
+        String firstLine = '';
+        String secondLine = '';
+        
+        // Build first line with as many words as possible (max 13 chars)
+        for (String word in words) {
+          if ((firstLine + word).length <= 13) {
+            firstLine += (firstLine.isEmpty ? '' : ' ') + word;
+          } else {
+            // Add remaining words to second line
+            secondLine += (secondLine.isEmpty ? '' : ' ') + word;
+          }
         }
-        // Align qty and amount to match header positions
-        String qtyAmtLine = ''.padRight(19) + qtyStr.padRight(8) + amtStr;
+        
+        // If second line is empty, use simple truncation
+        if (secondLine.isEmpty) {
+          firstLine = productName.substring(0, 13);
+          secondLine = productName.substring(13);
+        }
+        
+        // Print first line
+        bytes += generator.text(firstLine);
+        
+        // Print second line with qty and amount
+        String qtyAmtLine = secondLine.padRight(14) + qtyStr.padRight(9) + amtStr;
         bytes += generator.text(qtyAmtLine);
       }
     }
 
-    // Totals
+    // Totals - better alignment for 58mm paper
     bytes += generator.text('================================');
     
-    String subtotalAmount = 'Rs.${sale.items.fold(0.0, (a, b) => a + b.subtotal).toStringAsFixed(2)}';
-    String subtotalLine = 'Subtotal:'.padRight(20) + subtotalAmount.padLeft(12);
+    String subtotalAmount = '$currencySymbol${sale.items.fold(0.0, (a, b) => a + b.subtotal).toStringAsFixed(2)}';
+    String subtotalLine = 'Subtotal:' + subtotalAmount.padLeft(24);
     bytes += generator.text(subtotalLine);
     
     if (sale.discount > 0) {
-      String discountAmount = '-Rs.${sale.discount.toStringAsFixed(2)}';
-      String discountLine = 'Discount:'.padRight(20) + discountAmount.padLeft(12);
+      String discountAmount = '-$currencySymbol${sale.discount.toStringAsFixed(2)}';
+      String discountLine = 'Discount:' + discountAmount.padLeft(24);
       bytes += generator.text(discountLine);
     }
     
     bytes += generator.text('================================');
     
-    String totalAmount = 'Rs.${sale.totalAmount.toStringAsFixed(2)}';
-    String totalLine = 'TOTAL:'.padRight(20) + totalAmount.padLeft(12);
+    String totalAmount = '$currencySymbol${sale.totalAmount.toStringAsFixed(2)}';
+    String totalLine = 'TOTAL:' + totalAmount.padLeft(26);
     bytes += generator.text(totalLine, styles: PosStyles(bold: true));
     bytes += generator.text('');
 

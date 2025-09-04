@@ -205,7 +205,7 @@ class ThermalPreviewDialog extends StatelessWidget {
 
         SizedBox(height: isSmallScreen ? 6 : 8),
 
-        // Items header
+        // Items header - adjusted to match thermal printer format
         Container(
           width: double.infinity,
           padding: EdgeInsets.symmetric(
@@ -217,7 +217,7 @@ class ThermalPreviewDialog extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                flex: 6,
+                flex: 7,
                 child: Text(
                   'ITEM',
                   style: TextStyle(
@@ -228,7 +228,7 @@ class ThermalPreviewDialog extends StatelessWidget {
                 ),
               ),
               Expanded(
-                flex: 1,
+                flex: 3,
                 child: Text(
                   'QTY',
                   style: TextStyle(
@@ -240,19 +240,7 @@ class ThermalPreviewDialog extends StatelessWidget {
                 ),
               ),
               Expanded(
-                flex: 2,
-                child: Text(
-                  'RATE',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 7 : 8,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                  textAlign: TextAlign.right,
-                ),
-              ),
-              Expanded(
-                flex: 2,
+                flex: 3,
                 child: Text(
                   'AMT',
                   style: TextStyle(
@@ -406,18 +394,32 @@ class ThermalPreviewDialog extends StatelessWidget {
     final qty = item.qty.toStringAsFixed(product?.unit == UnitType.kg ? 1 : 0);
     final unitLabel = item.unitLabel.isNotEmpty ? item.unitLabel : (product?.unit.name ?? '');
 
-    // Force 15 character limit per line
+    String qtyStr = '$qty ${unitLabel.isNotEmpty ? unitLabel : ''}'.trim();
+    String amtStr = '${item.subtotal.toStringAsFixed(2)}';
+
+    // Split product name intelligently at word boundaries (max 13 chars for first line)
     String firstLine = '';
     String secondLine = '';
-
-    if (productName.length <= 15) {
+    
+    if (productName.length <= 13) {
       firstLine = productName;
     } else {
-      firstLine = productName.substring(0, 15);
-      if (productName.length > 30) {
-        secondLine = productName.substring(15, 30) + '..';
-      } else {
-        secondLine = productName.substring(15);
+      List<String> words = productName.split(' ');
+      
+      // Build first line with as many words as possible (max 13 chars)
+      for (String word in words) {
+        if ((firstLine + word).length <= 13) {
+          firstLine += (firstLine.isEmpty ? '' : ' ') + word;
+        } else {
+          // Add remaining words to second line
+          secondLine += (secondLine.isEmpty ? '' : ' ') + word;
+        }
+      }
+      
+      // If second line is empty, use simple truncation
+      if (secondLine.isEmpty) {
+        firstLine = productName.substring(0, 13);
+        secondLine = productName.substring(13);
       }
     }
 
@@ -435,65 +437,85 @@ class ThermalPreviewDialog extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Product name line
-          Text(
-            firstLine + (secondLine.isNotEmpty ? '\n$secondLine' : ''),
-            style: TextStyle(
-              fontSize: isSmallScreen ? 7 : 8,
-              fontWeight: FontWeight.bold,
-            ),
-            maxLines: 2,
-          ),
-          SizedBox(height: isSmallScreen ? 0.5 : 1),
-          // Quantity, rate, amount line
-          Row(
-            children: [
-              if (unitLabel.isNotEmpty) ...[
+          // Show product name with intelligent splitting
+          if (secondLine.isEmpty) ...[
+            // Short name - show on one line with qty and amount
+            Row(
+              children: [
+                Expanded(
+                  flex: 7,
+                  child: Text(
+                    firstLine,
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 7 : 8,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
                 Expanded(
                   flex: 3,
                   child: Text(
-                    unitLabel,
+                    qtyStr,
+                    style: const TextStyle(fontSize: 7),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    'Rs.$amtStr',
                     style: TextStyle(
-                      fontSize: 6,
-                      color: Colors.grey.shade600,
+                      fontSize: isSmallScreen ? 6 : 7,
+                      fontWeight: FontWeight.bold,
                     ),
-                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
                   ),
                 ),
-              ] else
-                Expanded(flex: 3, child: SizedBox()),
-              Expanded(
-                flex: 1,
-                child: Text(
-                  qty,
-                  style: const TextStyle(fontSize: 7),
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              ],
+            ),
+          ] else ...[
+            // Long name - show name on first line, then qty/amount on second line
+            Text(
+              firstLine,
+              style: TextStyle(
+                fontSize: isSmallScreen ? 7 : 8,
+                fontWeight: FontWeight.bold,
               ),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  '${item.sellingPrice.toStringAsFixed(2)}',
-                  style: const TextStyle(fontSize: 7),
-                  textAlign: TextAlign.right,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  '${item.subtotal.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 6 : 7,
-                    fontWeight: FontWeight.bold,
+            ),
+            Row(
+              children: [
+                Expanded(
+                  flex: 7,
+                  child: Text(
+                    secondLine,
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 7 : 8,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  textAlign: TextAlign.right,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
-          ),
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    qtyStr,
+                    style: const TextStyle(fontSize: 7),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    'Rs.$amtStr',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 6 : 7,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
